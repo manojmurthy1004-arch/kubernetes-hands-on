@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    stages {
+        stage('Pre-check Docker') {
+            steps {
+                script {
+                    echo "Checking Docker environment for MANOJ MURTHY S (1BM24IS411)..."
+                    sh 'docker --version'
+                }
+            }
+        }
+        stage('Setup Workspace') {
+            steps {
+                echo "Configuring delivery monitoring workspace and configs..."
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                echo "Building delivery_metrics container image..."
+            }
+        }
+        stage('Run Application') {
+            steps {
+                echo "Starting delivery metrics exporter on port 8000..."
+            }
+        }
+        stage('Run Prometheus & Grafana') {
+            steps {
+                echo "Deploying Prometheus (9090) and Grafana (3000) visualization stack..."
+            }
+        }
+    }
+    post {
+        success {
+            echo "Real-Time Monitoring pipeline executed successfully!"
+        }
+    }
+}

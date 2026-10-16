@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+
+    environment {
+        STUDENT_NAME = "MANOJ MURTHY S"
+        STUDENT_USN  = "1BM24IS411"
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                echo "Executing Build Stage for ${env.STUDENT_NAME} (${env.STUDENT_USN})..."
+                echo "Installing dependencies from requirements.txt..."
+                sh 'pip3 install --no-cache-dir -r Exercise-09-Jenkins-Multi-Stage-Pipeline/requirements.txt'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo "Executing Automated Unit Tests..."
+                sh 'python3 -m unittest discover -s Exercise-09-Jenkins-Multi-Stage-Pipeline'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo "Deploying application artifacts to staging directory..."
+                sh '''
+                mkdir -p ${WORKSPACE}/python-app-deploy
+                cp ${WORKSPACE}/Exercise-09-Jenkins-Multi-Stage-Pipeline/app.py ${WORKSPACE}/python-app-deploy/
+                echo "Deployment artifact prepared successfully."
+                '''
+            }
+        }
+
+        stage('Run Application') {
+            steps {
+                echo "Starting background application process..."
+                sh '''
+                nohup python3 ${WORKSPACE}/python-app-deploy/app.py > ${WORKSPACE}/python-app-deploy/app.log 2>&1 &
+                echo $! > ${WORKSPACE}/python-app-deploy/app.pid
+                echo "Application running with PID $(cat ${WORKSPACE}/python-app-deploy/app.pid)"
+                '''
+            }
+        }
+
+        stage('Test Application') {
+            steps {
+                echo "Verifying live running application health..."
+                sh 'python3 Exercise-09-Jenkins-Multi-Stage-Pipeline/test_app.py'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "CI/CD Pipeline Completed Successfully for MANOJ MURTHY S!"
+        }
+        failure {
+            echo "Pipeline Failed. Check logs for troubleshooting."
+        }
+        always {
+            sh '''
+            if [ -f ${WORKSPACE}/python-app-deploy/app.pid ]; then
+                kill $(cat ${WORKSPACE}/python-app-deploy/app.pid) || true
+            fi
+            '''
+        }
+    }
+}
